@@ -1,14 +1,52 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { SubmitEventHandler } from "react";
+import type { DbClient } from "#/dal/db/client"; //yes no?
+import * as users from '../dal/userService'
+import { authClient } from "#/dal/db/authClient";
 
 interface AuthFormProps {
   mode: "signin" | "signup";
 }
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
-  };
+  const navigate = useNavigate();
+
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const formData = new FormData(form);
+
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  try {
+    if (mode === "signup") {
+      const name = formData.get("fullName") as string;
+
+      const res = await authClient.signUp.email({ email, password, name });
+      console.log("SIGNUP RESPONSE:", res);
+
+      if (res.data?.user) {
+        navigate({ to: "/" });
+      } else {
+        alert(res.error?.message || "Signup failed");
+      }
+    } else {
+      const res = await authClient.signIn.email({ email, password });
+      console.log("SIGNIN RESPONSE:", res);
+
+      if (res.data?.user) {
+        navigate({ to: "/" });
+      } else {
+        alert(res.error?.message || "Signin failed");
+      }
+    }
+  } catch (err: any) {
+    console.error("Auth error:", err);
+    alert(err.message || "Authentication failed");
+  }
+};
 
   return (
     <section className="mx-auto w-full max-w-md rounded-2xl border border-(--line) bg-[#fffdf8] p-6 shadow-[0_14px_30px_rgba(126,88,42,0.12)] sm:p-7">
@@ -71,7 +109,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             type="password"
             required
             className="w-full rounded-xl border border-[#e2d7c4] bg-[#fffdfa] px-3.5 py-2.5 text-(--ink-strong) placeholder:text-[#a89276] focus:border-[rgba(221,107,32,0.55)] focus:outline-none focus:ring-2 focus:ring-[rgba(221,107,32,0.17)]"
-            placeholder="••••••••"
+
           />
         </div>
 

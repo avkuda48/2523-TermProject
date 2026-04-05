@@ -5,6 +5,7 @@ import { HomeHero } from "#/components/HomeHero";
 import { Suspense } from "react";
 import { getJokesQuery } from "#/queries";
 
+
 export const Route = createFileRoute("/")({
   component: App,
   loader: ({ context }) => {

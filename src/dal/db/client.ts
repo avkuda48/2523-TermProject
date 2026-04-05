@@ -1,6 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import * as schema from "#/dal/db/schema";
+import * as schema from "./schema";
+
+//makes db connection to drizzle for types
 
 export function dbConnection() {
   const databaseUrl = process.env.DATABASE_URL;
