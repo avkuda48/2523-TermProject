@@ -1,5 +1,4 @@
 import { CommentsDrawer } from "#/components/CommentsDrawer";
-import { isLoggedIn } from "#/auth/fakeAuth";
 import type { Joke } from "#/types";
 import {
   ArrowBigDown,
@@ -8,6 +7,9 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+import { getCurrentUserQuery } from "#/queries/keys";
+import { useQuery } from "@tanstack/react-query";
+
 
 interface JokeCardProps {
   joke: Joke;
@@ -30,15 +32,17 @@ export function JokeCard({
   onDelete,
   isDeleting,
 }: JokeCardProps) {
-  const isDeleteDisabled = isDeleting || !isLoggedIn;
+  const { data: currentUser } = useQuery(getCurrentUserQuery);
+
+  const isDeleteDisabled = isDeleting || !currentUser;
 
   return (
+
     <div
-      className={`rounded-[0.95rem] border p-4 shadow-[0_12px_20px_rgba(117,86,46,0.08)] transition-transform duration-150 ease-in hover:-translate-y-0.5 ${
-        isTopJoke
+      className={`rounded-[0.95rem] border p-4 shadow-[0_12px_20px_rgba(117,86,46,0.08)] transition-transform duration-150 ease-in hover:-translate-y-0.5 ${isTopJoke
           ? "border-[#f2cb7f] bg-[radial-gradient(circle_at_85%_16%,rgba(251,191,36,0.18)_0,transparent_38%),#fffdf8]"
           : "border-[#e9dfcf] bg-[#fffefd]"
-      }`}
+        }`}
     >
       <div className="grid grid-cols-[auto_1fr] items-center gap-3">
         <div
@@ -50,8 +54,8 @@ export function JokeCard({
             className="inline-flex h-[1.4rem] w-[1.4rem] cursor-pointer items-center justify-center rounded-[0.4rem] border-0 bg-transparent text-[#8a6942] hover:bg-[#f7ebd8] hover:text-[#5f472a] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[#8a6942]"
             onClick={() => onVote(joke.id, 1)}
             aria-label="Upvote joke"
-            disabled={!isLoggedIn}
-            title={!isLoggedIn ? "Sign in to vote" : undefined}
+            disabled={!currentUser}
+            title={!currentUser ? "Sign in to vote" : undefined}
           >
             <ArrowBigUp className="h-4 w-4" />
           </button>
@@ -63,8 +67,8 @@ export function JokeCard({
             className="inline-flex h-[1.4rem] w-[1.4rem] cursor-pointer items-center justify-center rounded-[0.4rem] border-0 bg-transparent text-[#8a6942] hover:bg-[#f7ebd8] hover:text-[#5f472a] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-[#8a6942]"
             onClick={() => onVote(joke.id, -1)}
             aria-label="Downvote joke"
-            disabled={!isLoggedIn}
-            title={!isLoggedIn ? "Sign in to vote" : undefined}
+            disabled={!currentUser}
+            title={!currentUser ? "Sign in to vote" : undefined}
           >
             <ArrowBigDown className="h-4 w-4" />
           </button>
@@ -93,17 +97,19 @@ export function JokeCard({
                 <MessageCircle className="h-3.5 w-3.5" />
                 <span>{joke.comments.length}</span>
               </button>
-              <button
-                type="button"
-                className="inline-flex cursor-pointer items-center gap-[0.28rem] rounded-full border border-[#efc7c7] bg-[#fff7f7] px-[0.52rem] py-[0.2rem] text-[0.76rem] font-bold text-[#8c2f2f] hover:border-[#e7a8a8] hover:bg-[#ffeded] disabled:cursor-not-allowed disabled:opacity-65"
-                onClick={() => onDelete(joke.id)}
-                aria-label="Delete joke"
-                disabled={isDeleteDisabled}
-                title={!isLoggedIn ? "Sign in to delete jokes" : undefined}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>{isDeleting ? "Deleting..." : "Delete"}</span>
-              </button>
+              {currentUser?.id === joke.userId && (
+                <button
+                  type="button"
+                  className="inline-flex cursor-pointer items-center gap-[0.28rem] rounded-full border border-[#efc7c7] bg-[#fff7f7] px-[0.52rem] py-[0.2rem] text-[0.76rem] font-bold text-[#8c2f2f] hover:border-[#e7a8a8] hover:bg-[#ffeded] disabled:cursor-not-allowed disabled:opacity-65"
+                  onClick={() => onDelete(joke.id)}
+                  aria-label="Delete joke"
+                  disabled={isDeleteDisabled}
+                  title={!currentUser ? "Sign in to delete jokes" : undefined}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>{isDeleting ? "Deleting..." : "Delete"}</span>
+                </button>
+              )}
             </div>
           </div>
 
