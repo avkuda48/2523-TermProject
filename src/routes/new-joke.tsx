@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import {
   createJokeMutation,
@@ -7,6 +7,10 @@ import {
 import { createJoke } from "#/serverFunctions/jokeFns";
 import { useServerFn } from "@tanstack/react-start";
 import type { Joke } from "#/types";
+import { getCurrentUser } from "#/dal/userService";
+import { LoginPlease } from "#/components/LoginPlease";
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentUserQuery } from "#/queries/keys";
 
 export const Route = createFileRoute("/new-joke")({
   component: NewJokePage,
@@ -47,6 +51,16 @@ function NewJokePage() {
       // Error is surfaced via mutation state and rendered below the form.
     }
   };
+
+  const { data: currentUser, isLoading } = useQuery(getCurrentUserQuery);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!currentUser) {
+    return <LoginPlease />;
+  }
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-10 sm:pt-14">
