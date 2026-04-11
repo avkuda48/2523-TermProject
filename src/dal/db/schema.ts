@@ -16,6 +16,11 @@ export const jokesTable = pgTable("jokes", {
   question: text("question").notNull(),
   answer: text("answer").notNull(),
   score: integer("score").notNull().default(0),
+
+  userId: text("user_id")
+  .notNull()
+  .references(() => user.id, { onDelete: "cascade"}),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

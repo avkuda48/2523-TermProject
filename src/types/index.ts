@@ -1,6 +1,6 @@
-import type { CommentRow, JokeRow } from "#/server/db/schema";
+import type { CommentRow, JokeRow } from "src/dal/db/schema.ts";
 
-export type Joke = Pick<JokeRow, "id" | "question" | "answer" | "score"> & {
+export type Joke = Pick<JokeRow, "id" | "userId" | "question" | "answer" | "score"> & {
   comments: CommentRow["body"][];
 };
 

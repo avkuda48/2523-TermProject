@@ -10,7 +10,7 @@ export const getJokes = createServerFn({ method: "GET" }).handler(
 export const createJoke = createServerFn({ method: "POST" })
   .inputValidator((input: CreateJokeInput) => input)
   .handler(async ({ data, context }) => {
-    return context.jokeService.createJoke(data);
+    return context.jokeService.createJoke(data, context);
   });
 
 export const voteJoke = createServerFn({ method: "POST" })
