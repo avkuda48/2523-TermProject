@@ -6,6 +6,7 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 
@@ -18,8 +19,8 @@ export const jokesTable = pgTable("jokes", {
   score: integer("score").notNull().default(0),
 
   userId: text("user_id")
-  .notNull()
-  .references(() => user.id, { onDelete: "cascade"}),
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
 
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -138,6 +139,23 @@ export const commentsRelations = relations(commentsTable, ({ one }) => ({
     references: [jokesTable.id],
   }),
 }));
+
+export const votesTable = pgTable("votes", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  jokeId: integer("joke_id")
+    .notNull()
+    .references(() => jokesTable.id, { onDelete: "cascade" }),
+
+  value: integer("value").notNull(), // 1 or -1
+},
+  (table) => [
+    uniqueIndex("user_joke_unique").on(table.userId, table.jokeId),
+  ]);
 
 export type JokeRow = typeof jokesTable.$inferSelect;
 export type NewJokeRow = typeof jokesTable.$inferInsert;

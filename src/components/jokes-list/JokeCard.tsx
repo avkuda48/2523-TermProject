@@ -36,12 +36,14 @@ export function JokeCard({
 
   const isDeleteDisabled = isDeleting || !currentUser;
 
+  console.log("JOKE:", joke)
+
   return (
 
     <div
       className={`rounded-[0.95rem] border p-4 shadow-[0_12px_20px_rgba(117,86,46,0.08)] transition-transform duration-150 ease-in hover:-translate-y-0.5 ${isTopJoke
-          ? "border-[#f2cb7f] bg-[radial-gradient(circle_at_85%_16%,rgba(251,191,36,0.18)_0,transparent_38%),#fffdf8]"
-          : "border-[#e9dfcf] bg-[#fffefd]"
+        ? "border-[#f2cb7f] bg-[radial-gradient(circle_at_85%_16%,rgba(251,191,36,0.18)_0,transparent_38%),#fffdf8]"
+        : "border-[#e9dfcf] bg-[#fffefd]"
         }`}
     >
       <div className="grid grid-cols-[auto_1fr] items-center gap-3">
@@ -57,7 +59,10 @@ export function JokeCard({
             disabled={!currentUser}
             title={!currentUser ? "Sign in to vote" : undefined}
           >
-            <ArrowBigUp className="h-4 w-4" />
+            <ArrowBigUp
+              className={`h-4 w-4 ${joke.userVote === 1 ? "text-green-500" : ""
+                }`}
+            />
           </button>
           <span className="min-w-[1.3rem] text-center text-[0.84rem] font-black text-[#5c4b35]">
             {joke.score}
@@ -70,7 +75,10 @@ export function JokeCard({
             disabled={!currentUser}
             title={!currentUser ? "Sign in to vote" : undefined}
           >
-            <ArrowBigDown className="h-4 w-4" />
+            <ArrowBigDown
+              className={`h-4 w-4 ${joke.userVote === -1 ? "text-red-500" : ""
+                }`}
+            />
           </button>
         </div>
 

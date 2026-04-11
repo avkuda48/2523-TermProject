@@ -6,7 +6,7 @@ import type {
 } from "#/types";
 import { eq, sql } from "drizzle-orm";
 import type { DbClient } from "./db/client";
-import { commentsTable, jokesTable } from "./db/schema";
+import { commentsTable, jokesTable, votesTable } from "./db/schema";
 import { auth } from "#/dal/db/auth"
 import { and } from "drizzle-orm"
 import { getRequest } from "@tanstack/react-start/server";
@@ -15,6 +15,15 @@ export class JokeService {
   constructor(private readonly db: DbClient) { }
 
   async getJokes(): Promise<Joke[]> {
+
+    const request = getRequest();
+
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    const userId = session?.user?.id;
+
     const rows = await this.db.query.jokesTable.findMany({
       with: {
         comments: {
@@ -27,14 +36,32 @@ export class JokeService {
       orderBy: (joke, { asc }) => [asc(joke.createdAt)],
     });
 
-    return rows.map((row) => ({
-      id: row.id,
-      question: row.question,
-      answer: row.answer,
-      score: row.score,
-      userId: row.userId,
-      comments: row.comments.map((comment) => comment.body),
-    }));
+    return await Promise.all(
+      rows.map(async (row) => {
+        let userVote: 1 | -1 | null = null;
+
+        if (userId) {
+          const vote = await this.db.query.votesTable.findFirst({
+            where: and(
+              eq(votesTable.userId, userId),
+              eq(votesTable.jokeId, row.id)
+            ),
+          });
+
+          userVote = (vote?.value as 1 | -1) ?? null;
+        }
+
+        return {
+          id: row.id,
+          question: row.question,
+          answer: row.answer,
+          score: row.score,
+          userId: row.userId,
+          comments: row.comments.map((comment) => comment.body),
+          userVote,
+        };
+      })
+    );
   }
 
   async createJoke(
@@ -75,14 +102,58 @@ export class JokeService {
     return {
       ...insertedJoke,
       comments: [],
+      userVote: null,
     };
   }
 
   async voteJoke(input: VoteJokeInput): Promise<Joke> {
+    const request = getRequest();
+
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      throw new Error("You must be logged in to vote.");
+    }
+
+    const userId = session.user.id;
+
+    const existing = await this.db.query.votesTable.findFirst({
+      where: and(
+        eq(votesTable.userId, userId),
+        eq(votesTable.jokeId, input.id)
+      ),
+    });
+
+    let delta = input.delta;
+
+    if (!existing) {
+      await this.db.insert(votesTable).values({
+        userId,
+        jokeId: input.id,
+        value: input.delta,
+      });
+    } else if (existing.value === input.delta) {
+      await this.db
+        .delete(votesTable)
+        .where(eq(votesTable.id, existing.id))
+
+      delta = (-input.delta) as 1 | -1;
+
+    } else {
+      await this.db
+        .update(votesTable)
+        .set({ value: input.delta })
+        .where(eq(votesTable.id, existing.id));
+
+      delta = input.delta * 2;
+    }
+
     const [updatedJokeRow] = await this.db
       .update(jokesTable)
       .set({
-        score: sql<number>`${jokesTable.score} + ${input.delta}`,
+        score: sql<number>`${jokesTable.score} + ${delta}`,
       })
       .where(eq(jokesTable.id, input.id))
       .returning({
@@ -108,6 +179,10 @@ export class JokeService {
     const updatedJoke = {
       ...updatedJokeRow,
       comments: comments.map((comment) => comment.body),
+      userVote:
+        existing?.value === input.delta
+          ? null
+          : input.delta,
     };
 
     return updatedJoke;

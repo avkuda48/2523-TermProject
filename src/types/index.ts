@@ -1,7 +1,11 @@
 import type { CommentRow, JokeRow } from "src/dal/db/schema.ts";
 
-export type Joke = Pick<JokeRow, "id" | "userId" | "question" | "answer" | "score"> & {
+export type Joke = Pick<
+  JokeRow,
+  "id" | "question" | "answer" | "score" | "userId"
+> & {
   comments: CommentRow["body"][];
+  userVote: 1 | -1 | null;
 };
 
 export interface CreateJokeInput {
